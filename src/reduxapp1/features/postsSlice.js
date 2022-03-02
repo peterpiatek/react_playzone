@@ -1,13 +1,6 @@
-import {createSlice, nanoid} from '@reduxjs/toolkit';
-import {sub} from "date-fns";
-
-// https://jsonplaceholder.typicode.com/posts
-
-const fetchPosts = () => {
-    return (dispatch, getState) => {
-        // dispatch(action());
-    }
-}
+import {createSlice, nanoid, createAsyncThunk} from '@reduxjs/toolkit';
+import axios from "axios";
+import {addMinutes, parseISO} from 'date-fns';
 
 const postsSlice = createSlice({
     name: "posts",
@@ -22,9 +15,10 @@ const postsSlice = createSlice({
         // }
     // ],
     initialState: {
-        posts: [{id: 2, title: "Second post", content: 'Hello again',
-                timestamp: sub(new Date(), {minutes: 5}).toISOString(),
-                reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}}
+        posts: [
+            // {id: 2, title: "Second post", content: 'Hello again',
+            //     timestamp: sub(new Date(), {minutes: 5}).toISOString(),
+            //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}}
         ],
         status: 'idle',
         error: null
@@ -65,19 +59,47 @@ const postsSlice = createSlice({
             if(existingPost){
                 existingPost.reactions[name]++
             }
-        }
+        },
+    },
+    extraReducers(builder) {
+        builder
+            .addCase(fetchPosts.pending, (state, action) => {
+                console.log('loading');
+                state.status = 'loading'
+            })
+            .addCase(fetchPosts.fulfilled, (state, action) => {
+                console.log('success');
+                state.status = 'success';
+                const posts = action.payload.slice();
+                posts.forEach((p, i) => {
+                    p.timestamp = (addMinutes(new Date, i * 5)).toISOString();
+                });
+                state.posts = state.posts.concat(posts);
+            })
+            .addCase(fetchPosts.rejected, (state, action) => {
+                state.status = 'fail'
+                state.error = action.error.message
+            })
     }
 })
 
-export const selectAllPosts = state => state.posts;
+export const selectAllPosts = state => state.posts.posts;
 export const selectPostById = (state, id) => {
     if(id){
-        console.log(state);
         return state.posts.posts.find(p => p.id === id)
     } else {
         return null
     }
 }
+
+export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
+    try {
+        const res = await axios.get('https://jsonplaceholder.typicode.com/posts');
+        return res.data;
+    } catch(e) {
+        console.log(e);
+    }
+})
 
 export const { savePost, updatePost, deletePost, reactionUpdate } = postsSlice.actions;
 
