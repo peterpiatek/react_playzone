@@ -9,6 +9,9 @@ import {BrowserRouter} from "react-router-dom";
 import store from "./reduxapp1/app/store";
 import {Provider} from "react-redux";
 import App from "./reduxapp1/App";
+import {fetchUsers} from "./reduxapp1/features/users/usersSlice";
+
+store.dispatch(fetchUsers());
 
 ReactDOM.render(
   <React.StrictMode>

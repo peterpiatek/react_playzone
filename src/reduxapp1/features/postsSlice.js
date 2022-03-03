@@ -24,7 +24,7 @@ const postsSlice = createSlice({
         error: null
     },
     reducers: {
-        savePost: {
+        /*savePost: {
             reducer(state, action){
                 console.log(action);
                 state.posts.push(action.payload);
@@ -41,7 +41,7 @@ const postsSlice = createSlice({
                     }
                 }
             }
-        },
+        },*/
         updatePost: (state, action) => {
             const { id, title, content } = action.payload;
             const editPost = state.posts.find(p => p.id === id);
@@ -79,6 +79,10 @@ const postsSlice = createSlice({
             .addCase(fetchPosts.rejected, (state, action) => {
                 state.status = 'fail'
                 state.error = action.error.message
+            });
+        builder
+            .addCase(savePost.fulfilled, (state, action) => {
+                state.posts.push(action.payload);
             })
     }
 })
@@ -92,6 +96,26 @@ export const selectPostById = (state, id) => {
     }
 }
 
+export const savePost = createAsyncThunk('posts/savePost', async post => {
+    try {
+        const fetch = (post) => {
+            return new Promise((res, rej) => {
+                setTimeout(() => {
+                    res({
+                        ...post,
+                        timestamp: new Date().toISOString()
+                    })
+                }, 1500);
+            })
+        }
+        const res = await fetch(post);
+        console.log(res);
+        return res;
+    } catch(e) {
+        console.log(e);
+    }
+})
+
 export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
     try {
         const res = await axios.get('https://jsonplaceholder.typicode.com/posts');
@@ -101,6 +125,6 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
     }
 })
 
-export const { savePost, updatePost, deletePost, reactionUpdate } = postsSlice.actions;
+export const { updatePost, deletePost, reactionUpdate } = postsSlice.actions;
 
 export default postsSlice.reducer;

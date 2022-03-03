@@ -7,14 +7,11 @@ import TimeAgo from "./TimeAgo";
 import ReactionButtons from "./ReactionButtons";
 
 const PostExcerpt = ({post, dispatch}) => {
-
-
-
     return (
         <article>
             <h2>{post.title}</h2>
             <p>{post.body.substring(0, 100)}</p>
-            <PostAuthor id={post.user} /><br/><br/>
+            <PostAuthor id={post.userId} /><br/><br/>
             {/*<TimeAgo timestamp={post.timestamp} /><br/>*/}
             <Link to={`/post/${post.id}/`}>Read more</Link>
             <Link to={`/post/edit/${post.id}/`}>Edit</Link>

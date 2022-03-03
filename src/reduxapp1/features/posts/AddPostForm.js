@@ -9,9 +9,16 @@ const AddPostForm = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [user, setUser] = useState('');
+    const [addReqStatus, setAddReqStatus] = useState('idle');
+
+    const canSave = [title, content, user].every(Boolean) && addReqStatus === 'idle';
 
     const {id} = useParams();
-    const post = useSelector(state => selectPostById(state, id));
+    const post = useSelector(state => {
+        if(id){
+            return selectPostById(state, id);
+        }
+    });
     const users = useSelector(state => state.users);
 
     useEffect(()=>{
@@ -32,22 +39,27 @@ const AddPostForm = () => {
 
     let navigate = useNavigate();
 
-    const onSavePost = () => {
-        if (title && content) {
-            if(!post){
-                dispatch(savePost(title, content, user));
-            } else {
-                dispatch(updatePost({id: post.id, title, content, user}))
-            }
+    const onSavePost = async () => {
+        if (canSave) {
+            try{
+                setAddReqStatus('pending');
+                if(!post){
+                    await dispatch(savePost({title, body: content, userId: user})).unwrap();
+                } else {
+                    dispatch(updatePost({id: post.id, title, content, user}))
+                }
 
-            setTitle('');
-            setContent('');
-            setUser('');
-            navigate("/", {replace: true});
+                setTitle('');
+                setContent('');
+                setUser('');
+                navigate("/", {replace: true});
+            } catch(e) {
+                console.log(e);
+            } finally {
+                setAddReqStatus('idle');
+            }
         }
     }
-
-    const canSave = !!title && !!content && !! user;
 
     return (
         <section>
