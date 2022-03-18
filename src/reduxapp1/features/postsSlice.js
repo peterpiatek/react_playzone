@@ -1,4 +1,4 @@
-import {createSlice, nanoid, createAsyncThunk} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from "axios";
 import {addMinutes, parseISO} from 'date-fns';
 
@@ -90,7 +90,16 @@ const postsSlice = createSlice({
 export const selectAllPosts = state => state.posts.posts;
 export const selectPostById = (state, id) => {
     if(id){
-        return state.posts.posts.find(p => p.id === id)
+        return state.posts.posts.find(p => {
+            return Number(p.id) === Number(id);
+        })
+    } else {
+        return null
+    }
+}
+export const selectPostsByUser = (state, userId) => {
+    if(userId){
+        return state.posts.posts.filter(p => Number(p.userId) === Number(userId));
     } else {
         return null
     }
@@ -109,7 +118,6 @@ export const savePost = createAsyncThunk('posts/savePost', async post => {
             })
         }
         const res = await fetch(post);
-        console.log(res);
         return res;
     } catch(e) {
         console.log(e);

@@ -7,7 +7,6 @@ const SinglePostPage = () => {
 
     const {id} = useParams();
     const p = useSelector(state => selectPostById(state, id));
-
     return (
         <article key={p.id}>
             <h2>{p.title}</h2>
