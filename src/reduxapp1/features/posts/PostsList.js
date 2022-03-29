@@ -43,7 +43,7 @@ const PostsList = () => {
     } else if(postStatus === 'success'){
         const orderedPosts = postsData.slice().sort((a,b) => b.timestamp.localeCompare(a.timestamp));
         console.log(orderedPosts);
-        content = orderedPosts.map(p => <PostExcerpt post={p} />);
+        content = orderedPosts.map((p, i) => <PostExcerpt key={i} post={p} />);
     } else if(postStatus === 'fail'){
         content = <h3>{error}</h3>
     }

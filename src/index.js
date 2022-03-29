@@ -11,7 +11,7 @@ import {Provider} from "react-redux";
 import App from "./reduxapp1/App";
 import {fetchUsers} from "./reduxapp1/features/users/usersSlice";
 
-store.dispatch(fetchUsers());
+store.dispatch(fetchUsers())
 
 ReactDOM.render(
   <React.StrictMode>
