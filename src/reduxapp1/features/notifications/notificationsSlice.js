@@ -1,34 +1,44 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {addMinutes} from "date-fns";
 
-const api = (since) => {
+const api = (t) => {
     return new Promise((res, rej) => {
         setTimeout(() => {
-            res({message: "Notification message", date: addMinutes(since, 10)});
-        }, 1500);
+            res({
+                title: 'New Notification coming',
+                timestamp: addMinutes(new Date, 0).toISOString(),
+                userId: 1
+            });
+        }, 2000);
     })
-};
+}
 
-export const fetchNotifications = createAsyncThunk('notifications/fetchNotifications',
-    async(_, {getState}) => {
-        const allNotf = selectAllNotifications(getState());
-        const [newestNotf] = allNotf;
-        const latestTimestamp = newestNotf ? newestNotf.date : '';
-        const res = await api(latestTimestamp);
-        return res.data;
+export const fetchNotf = createAsyncThunk(
+    'notifications/fetchNotifications',
+    async (_, { getState }) => {
+        const allNotifications = selectAllNotf(getState());
+        const [latestNotification] = allNotifications;
+        const latestTimestamp = latestNotification ? latestNotification.timestamp : '';
+        const response = await api(latestTimestamp);
+        return response;
     }
 )
 
 const notificationsSlice = createSlice({
     name: 'notifications',
-    initialState: [],
+    initialState: [
+        {title: 'App writing in progress', timestamp: addMinutes(new Date, 5).toISOString(), userId: 2},
+        {title: 'Peter started to write the app', timestamp: addMinutes(new Date, 8).toISOString(), userId: 3}
+    ],
     reducers: {},
     extraReducers: {
-        [fetchNotifications.fulfilled] : (state, action) => {
+        [fetchNotf.fulfilled]: (state, action) => {
             state.push(action.payload);
-            state.sort((a,b) => b.date.localeCompare(a.date));
+            state.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
         }
     }
-})
+});
 
-export const selectAllNotifications = state => state.notifications;
+export const selectAllNotf = state => state.notifications;
+
+export default notificationsSlice.reducer;

@@ -6,6 +6,7 @@ import AddPostForm from "./features/posts/AddPostForm";
 import SinglePostPage from "./features/posts/SinglePostPage";
 import UserList from "./features/users/UserList";
 import UserPosts from "./features/users/UserPosts";
+import NotificationsList from "./features/notifications/NotificationsList";
 
 const App = () => {
     return (
@@ -18,6 +19,7 @@ const App = () => {
                 <Route exact path="/post/edit/:id" element={<AddPostForm/>} />
                 <Route exact path='/users' element={<UserList/>} />
                 <Route exact path='/users/:id' element={<UserPosts/>} />
+                <Route exact path='/notifications' element={<NotificationsList/>} />
             </Routes>
         </BrowserRouter>
     );
