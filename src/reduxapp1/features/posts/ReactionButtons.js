@@ -14,14 +14,12 @@ const ReactionButtons = ({post}) => {
 
     const dispatch = useDispatch();
 
-    const renderButtons = Object.entries(reactionEmoji).map(([name, ico]) => {
+    const renderButtons = Object.entries(reactionEmoji).map(([name, ico], i) => {
         return (
-            <button onClick={() => {
-                dispatch(reactionUpdate({id: post.id, name}));
-            }} key={name}>
+            <button onClick={() => {dispatch(reactionUpdate({id: post.id, name}))}} key={i}>
                 {ico} {post.reactions[name]}
             </button>
-        );
+        )
     });
 
     return (

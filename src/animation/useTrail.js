@@ -4,7 +4,6 @@ import {useTrail, animated} from "react-spring";
 const Trail = ({children, open}) => {
 
     const items = React.Children.toArray(children);
-    console.log(items);
 
     const trail = useTrail(items.length, {
         opacity: open ? 1 : 0,

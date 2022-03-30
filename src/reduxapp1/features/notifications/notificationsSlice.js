@@ -11,7 +11,6 @@ const api = (t) => {
     ];
     return new Promise((res, rej) => {
         setTimeout(() => {
-            console.log(counter);
             res(demoNotf[counter]);
             counter++;
         }, 800);

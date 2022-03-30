@@ -7,6 +7,7 @@ import {formatDistanceToNow, parseISO} from "date-fns";
 const NotificationsList = () => {
 
     const notifications = useSelector(selectAllNotf);
+
     const users = useSelector(selectAllUsers);
 
     const renderContent = () => {

@@ -1,4 +1,4 @@
-import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk, createSelector} from '@reduxjs/toolkit';
 import axios from "axios";
 import {addMinutes, parseISO} from 'date-fns';
 
@@ -64,15 +64,14 @@ const postsSlice = createSlice({
     extraReducers(builder) {
         builder
             .addCase(fetchPosts.pending, (state, action) => {
-                console.log('loading');
                 state.status = 'loading'
             })
             .addCase(fetchPosts.fulfilled, (state, action) => {
-                console.log('success');
                 state.status = 'success';
                 const posts = action.payload.slice();
                 posts.forEach((p, i) => {
                     p.timestamp = (addMinutes(new Date, i * 5)).toISOString();
+                    p.reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
                 });
                 state.posts = state.posts.concat(posts);
             })
@@ -97,13 +96,21 @@ export const selectPostById = (state, id) => {
         return null
     }
 }
-export const selectPostsByUser = (state, userId) => {
+
+//replacing selector function with memoized version
+/*export const selectPostsByUser = (state, userId) => {
     if(userId){
         return state.posts.posts.filter(p => Number(p.userId) === Number(userId));
     } else {
         return null
     }
-}
+}*/
+export const selectPostsByUser = createSelector(
+    [selectAllPosts, (state, id) => id],
+    (posts, id) => {
+        return posts.filter(post => Number(post.userId) === Number(id))
+    }
+)
 
 export const savePost = createAsyncThunk('posts/savePost', async post => {
     try {
