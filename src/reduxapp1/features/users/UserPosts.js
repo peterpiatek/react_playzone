@@ -10,7 +10,10 @@ const UserPosts = () => {
     const {id} = useParams();
     const user = useSelector(state => selectUserById(state, id));
 
-    const userPosts = useSelector(state => selectPostsByUser(state, id));
+    const userPosts = useSelector(state => {
+        return selectPostsByUser(state, id);
+    });
+    console.log(userPosts);
     const renderPosts = userPosts.map(p => {
         return (
             <article key={p.id}>

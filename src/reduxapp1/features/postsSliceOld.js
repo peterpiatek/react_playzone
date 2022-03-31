@@ -1,25 +1,47 @@
-import {createSlice, createAsyncThunk, createSelector, createEntityAdapter} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk, createSelector} from '@reduxjs/toolkit';
 import axios from "axios";
 import {addMinutes, parseISO} from 'date-fns';
 
-// normalize incoming data
-const normalize = (payload) => {
-    return payload.reduce((byId, post) => {
-        byId[post.id] = post;
-        return byId
-    }, {})
-}
-
-export const postsAdapter = createEntityAdapter({
-    //sort ids in state.posts
-    sortComparer: (a, b) => a.title.localeCompare(b.title),
-});
-const initialState = postsAdapter.getInitialState({ status: 'idle' });
-
 const postsSlice = createSlice({
     name: "posts",
-    initialState,
+    // initialState: [
+        // {id: 1, title: "First post", content: 'Hello',
+        //     timestamp: sub(new Date(), {minutes: 10}).toISOString(),
+        //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+        // },
+        // {id: 2, title: "Second post", content: 'Hello again',
+        //     timestamp: sub(new Date(), {minutes: 5}).toISOString(),
+        //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+        // }
+    // ],
+    initialState: {
+        posts: [
+            // {id: 2, title: "Second post", content: 'Hello again',
+            //     timestamp: sub(new Date(), {minutes: 5}).toISOString(),
+            //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}}
+        ],
+        status: 'idle',
+        error: null
+    },
     reducers: {
+        /*savePost: {
+            reducer(state, action){
+                console.log(action);
+                state.posts.push(action.payload);
+            },
+            prepare(title, content, user){
+                return {
+                    payload: {
+                        id: nanoid(),
+                        title,
+                        content,
+                        user,
+                        timestamp: new Date().toISOString(),
+                        reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+                    }
+                }
+            }
+        },*/
         updatePost: (state, action) => {
             const { id, title, content } = action.payload;
             const editPost = state.posts.find(p => p.id === id);
@@ -42,29 +64,23 @@ const postsSlice = createSlice({
     extraReducers(builder) {
         builder
             .addCase(fetchPosts.pending, (state, action) => {
-                state.status = 'loading';
+                state.status = 'loading'
             })
             .addCase(fetchPosts.fulfilled, (state, action) => {
                 // normalize incoming data
                 state.status = 'success';
-
-                const byId = normalize(action.payload);
-
-                // moving to external fn
-               //  const byId = action.payload.reduce((byId, post) => {
-               //      byId[post.id] = post;
-               //      return byId
-               // }, {});
+                const byId = action.payload.reduce((byId, post) => {
+                    byId[post.id] = post;
+                    return byId
+               }, {})
+                state.entities = byId;
+                state.ids = Object.keys(byId);
                 let i = 0;
-                for (const key in byId) {
-                    byId[key].timestamp = (addMinutes(new Date, i * 5)).toISOString();
-                    byId[key].reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0};
+                for (const key in state.entities) {
+                    state.entities[key].timestamp = (addMinutes(new Date, i * 5)).toISOString();
+                    state.entities[key].reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0};
                     i++;
                 }
-                // state.entities = byId;
-                // state.ids = Object.keys(byId);
-                postsAdapter.upsertMany(state, byId);
-
                 // no normalization
 
                 // state.status = 'success';
@@ -86,26 +102,18 @@ const postsSlice = createSlice({
     }
 })
 
-export const {
-    selectById: selectPostById,
-    selectIds: selectPostIds,
-    selectEntities: selectPostEntities,
-    selectAll: selectAllPosts,
-    selectTotal: selectTotalPosts,
-} = postsAdapter.getSelectors((state) => state.posts);
+export const selectAllPosts = state => state.posts.posts;
+export const selectPostById = (state, id) => {
+    if(id){
+        return state.posts.posts.find(p => {
+            return Number(p.id) === Number(id);
+        })
+    } else {
+        return null
+    }
+}
 
-// not needed - using adapter auto-generated functions
-// export const selectAllPosts = state => state.posts.posts;
-// export const selectPostById = (state, id) => {
-//     if(id){
-//         return state.posts.posts.find(p => {
-//             return Number(p.id) === Number(id);
-//         })
-//     } else {
-//         return null
-//     }
-// }
-
+//replacing selector function with memoized version
 /*export const selectPostsByUser = (state, userId) => {
     if(userId){
         return state.posts.posts.filter(p => Number(p.userId) === Number(userId));
@@ -113,10 +121,11 @@ export const {
         return null
     }
 }*/
-//replacing selector function with memoized version - moving filtering logic here instead of being in the component
 export const selectPostsByUser = createSelector(
     [selectAllPosts, (state, id) => id],
-    (posts, id) => posts.filter(post => Number(post.userId) === Number(id))
+    (posts, id) => {
+        return posts.filter(post => Number(post.userId) === Number(id))
+    }
 )
 
 export const savePost = createAsyncThunk('posts/savePost', async post => {
