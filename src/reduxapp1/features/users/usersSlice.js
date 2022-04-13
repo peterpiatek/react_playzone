@@ -1,16 +1,8 @@
 import {createAsyncThunk, createEntityAdapter, createSlice} from '@reduxjs/toolkit';
 import axios from "axios";
-import {postsAdapter} from "../postsSlice";
 
-const normalize = (payload) => {
-    return payload.reduce((byId, d) => {
-        byId[d.id] = d;
-        return byId
-    }, {})
-}
-
-const usersAdapter = createEntityAdapter({
-    sortComparer: (a, b) => a.name.localeCompare(b.name),
+export const usersAdapter = createEntityAdapter({
+    sortComparer: (a, b) => a.name.localeCompare(b.name)
 });
 const initialState = usersAdapter.getInitialState();
 
@@ -24,12 +16,12 @@ const usersSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers(builder) {
-        builder.addCase( fetchUsers.fulfilled, (state, action) => {
-            const byId = normalize(action.payload);
-            usersAdapter.upsertMany(state, byId);
-        })
+        builder.addCase( fetchUsers.fulfilled, usersAdapter.setAll)
     }
 })
+// replacing with adapter auto-generated functions
+// export const selectAllUsers  = state => state.users;
+// export const selectUserById = (state, userId) => state.users.find(u => u.id.toString() === userId.toString());
 
 export const {
     selectById: selectUserById,
@@ -37,10 +29,6 @@ export const {
     selectEntities: selectUserEntities,
     selectAll: selectAllUsers,
     selectTotal: selectTotalUsers,
-} = usersAdapter.getSelectors((state) => state.users);
-
-// no need - replaced by adapter
-// export const selectAllUsers = state => state.users;
-// export const selectUserById = (state, id) => state.users.find(u => String(u.id) === String(id));
+} = usersAdapter.getSelectors((state) => state.users)
 
 export default usersSlice.reducer;

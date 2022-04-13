@@ -1,9 +1,10 @@
 import {useSelector} from 'react-redux';
+import {selectUserById} from "../users/usersSlice";
 
 
 const PostAuthor = ({id}) => {
 
-    const user = useSelector(state => state.users.find(u => String(id) === String(u.id)));
+    const user = useSelector(state => selectUserById(state, id));
     let content;
     if(user){
         content = user.name;

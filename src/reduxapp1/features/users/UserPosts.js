@@ -2,33 +2,30 @@ import React from 'react';
 import {Link, useParams} from "react-router-dom";
 import {useSelector} from "react-redux";
 import {selectUserById} from "./usersSlice";
-import {selectAllPosts, selectPostsByUser} from "../postsSlice";
-
+import {selectPostsByUser} from "../postsSlice";
 
 const UserPosts = () => {
 
     const {id} = useParams();
-    const user = useSelector(state => selectUserById(state, id));
+    const user = useSelector(state => selectUserById(state, id))
+    const postsPerUser = useSelector(state => selectPostsByUser(state, id))
 
-    const userPosts = useSelector(state => {
-        return selectPostsByUser(state, id);
-    });
-    console.log(userPosts);
-    const renderPosts = userPosts.map(p => {
-        return (
-            <article key={p.id}>
-                <h2>{p.title}</h2>
-                <p>{p.body}</p>
-            </article>
-        )
-    })
+    const renderPosts = () => {
+        return postsPerUser.map(p => (
+            <div>
+                <h2><Link to={`/posts/${p.id}`}>{p.title}</Link></h2>
+                <span>{ p.body.substring(0, 100)} ... </span>
+            </div>
+        ))
+    }
+
 
     return (
         <div>
-            {renderPosts}
+            {user && <h1>{user.name}'s posts</h1>}
+            {renderPosts()}
         </div>
     );
-
 };
 
 export default UserPosts;

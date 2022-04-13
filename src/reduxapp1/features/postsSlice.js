@@ -1,39 +1,71 @@
-import {createSlice, createAsyncThunk, createSelector, createEntityAdapter} from '@reduxjs/toolkit';
+import {createAsyncThunk, createEntityAdapter, createSelector, createSlice} from '@reduxjs/toolkit';
 import axios from "axios";
-import {addMinutes, parseISO} from 'date-fns';
+import {addMinutes} from 'date-fns';
 
-// normalize incoming data
-const normalize = (payload) => {
-    return payload.reduce((byId, post) => {
-        byId[post.id] = post;
-        return byId
-    }, {})
-}
+//replaced with createEntityAdapter
+// const normalize = (payload) => {
+//     return payload.reduce((byId, prop) => {
+//         byId[prop.id] = prop
+//         return byId
+//     }, {})
+// }
 
-export const postsAdapter = createEntityAdapter({
-    //sort ids in state.posts
-    sortComparer: (a, b) => a.title.localeCompare(b.title),
+const postsAdapter = createEntityAdapter({
+    sortComparer: (a, b) => a.title.localeCompare(b.title)
 });
-const initialState = postsAdapter.getInitialState({ status: 'idle' });
+const initialState = postsAdapter.getInitialState({
+    status: 'idle',
+    error: null
+});
 
 const postsSlice = createSlice({
     name: "posts",
+    // initialState: [
+        // {id: 1, title: "First post", content: 'Hello',
+        //     timestamp: sub(new Date(), {minutes: 10}).toISOString(),
+        //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+        // },
+        // {id: 2, title: "Second post", content: 'Hello again',
+        //     timestamp: sub(new Date(), {minutes: 5}).toISOString(),
+        //     reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+        // }
+    // ],
     initialState,
     reducers: {
+        /*savePost: {
+            reducer(state, action){
+                console.log(action);
+                state.posts.push(action.payload);
+            },
+            prepare(title, content, user){
+                return {
+                    payload: {
+                        id: nanoid(),
+                        title,
+                        content,
+                        user,
+                        timestamp: new Date().toISOString(),
+                        reactions: {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+                    }
+                }
+            }
+        },*/
         updatePost: (state, action) => {
             const { id, title, content } = action.payload;
-            const editPost = state.posts.find(p => p.id === id);
+            const editPost = state.entities[id];
             if(editPost){
                 editPost.title = title;
                 editPost.content = content
             }
         },
-        deletePost: (state, action) => {
-            state.posts.splice(state.posts.findIndex(p => String(p.id) === String(action.payload)), 1);
+        deletePost: (state, {payload}) => {
+            // state.posts.splice(state.entities.findIndex(p => String(p.id) === String(action.payload)), 1);
+            //@todo test delete
+            delete state.entities[payload];
         },
-        reactionUpdate: (state, action) => {
-            const {id, name} = action.payload;
-            const existingPost = state.posts.find(p => String(p.id) === String(id));
+        reactionUpdate: (state, {payload}) => {
+            const {id, name} = payload;
+            const existingPost = state.entities[id];
             if(existingPost){
                 existingPost.reactions[name]++
             }
@@ -42,59 +74,33 @@ const postsSlice = createSlice({
     extraReducers(builder) {
         builder
             .addCase(fetchPosts.pending, (state, action) => {
-                state.status = 'loading';
+                // console.log('loading');
+                state.status = 'loading'
             })
             .addCase(fetchPosts.fulfilled, (state, action) => {
-                // normalize incoming data
+                // console.log('success');
                 state.status = 'success';
-
-                const byId = normalize(action.payload);
-
-                // moving to external fn
-               //  const byId = action.payload.reduce((byId, post) => {
-               //      byId[post.id] = post;
-               //      return byId
-               // }, {});
-                let i = 0;
-                for (const key in byId) {
-                    byId[key].timestamp = (addMinutes(new Date, i * 5)).toISOString();
-                    byId[key].reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0};
-                    i++;
-                }
-                // state.entities = byId;
-                // state.ids = Object.keys(byId);
-                postsAdapter.upsertMany(state, byId);
-
-                // no normalization
-
-                // state.status = 'success';
-                // const posts = action.payload.slice();
-                // posts.forEach((p, i) => {
-                //     p.timestamp = (addMinutes(new Date, i * 5)).toISOString();
-                //     p.reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
-                // });
+                const posts = action.payload.slice();
+                posts.forEach((p, i) => {
+                    p.timestamp = (addMinutes(new Date, i * 5)).toISOString();
+                    p.reactions = {thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0}
+                });
+                // replaced with createEntityAdapter
+                // const normalized = normalize(posts);
                 // state.posts = state.posts.concat(posts);
+                postsAdapter.upsertMany(state, posts);
             })
             .addCase(fetchPosts.rejected, (state, action) => {
                 state.status = 'fail'
                 state.error = action.error.message
             });
+
         builder
-            .addCase(savePost.fulfilled, (state, action) => {
-                state.posts.push(action.payload);
-            })
+            .addCase(savePost.fulfilled, postsAdapter.addOne)
     }
 })
 
-export const {
-    selectById: selectPostById,
-    selectIds: selectPostIds,
-    selectEntities: selectPostEntities,
-    selectAll: selectAllPosts,
-    selectTotal: selectTotalPosts,
-} = postsAdapter.getSelectors((state) => state.posts);
-
-// not needed - using adapter auto-generated functions
+// replaced with autogenerated functions from postsAdapter
 // export const selectAllPosts = state => state.posts.posts;
 // export const selectPostById = (state, id) => {
 //     if(id){
@@ -105,24 +111,33 @@ export const {
 //         return null
 //     }
 // }
+//replaced with memoized funciton - using toolkit reselect library: createSelector
+// export const selectPostsByUser = (state, userId) => {
+//     if(userId){
+//         return state.posts.posts.filter(p => Number(p.userId) === Number(userId));
+//     } else {
+//         return null
+//     }
+// }
 
-/*export const selectPostsByUser = (state, userId) => {
-    if(userId){
-        return state.posts.posts.filter(p => Number(p.userId) === Number(userId));
-    } else {
-        return null
-    }
-}*/
-//replacing selector function with memoized version - moving filtering logic here instead of being in the component
+export const {
+    selectAll: selectAllPosts,
+    selectById: selectPostById,
+    selectIds: selectPostIds
+    // Pass in a selector that returns the posts slice of state
+} = postsAdapter.getSelectors(state => state.posts);
+
 export const selectPostsByUser = createSelector(
-    [selectAllPosts, (state, id) => id],
-    (posts, id) => posts.filter(post => Number(post.userId) === Number(id))
+    // selectors: arguments are passed to each of them from above function when invoked
+    [selectAllPosts, (state, userId) => userId],
+    // below arguments are output of above selector functions
+    (posts, userId) => posts.filter(p => p.userId.toString() === userId.toString())
 )
 
 export const savePost = createAsyncThunk('posts/savePost', async post => {
     try {
         const fetch = (post) => {
-            return new Promise((res, rej) => {
+            return new Promise((res) => {
                 setTimeout(() => {
                     res({
                         ...post,
@@ -131,8 +146,7 @@ export const savePost = createAsyncThunk('posts/savePost', async post => {
                 }, 1500);
             })
         }
-        const res = await fetch(post);
-        return res;
+        return await fetch(post);
     } catch(e) {
         console.log(e);
     }

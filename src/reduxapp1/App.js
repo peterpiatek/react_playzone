@@ -19,7 +19,7 @@ const App = () => {
                 <Route exact path="/post/edit/:id" element={<AddPostForm/>} />
                 <Route exact path='/users' element={<UserList/>} />
                 <Route exact path='/users/:id' element={<UserPosts/>} />
-                <Route exact path='/notifications' element={<NotificationsList/>} />
+                <Route exact path={'/notifications'} element={<NotificationsList/>} />
             </Routes>
         </BrowserRouter>
     );
